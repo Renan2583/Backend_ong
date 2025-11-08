@@ -1,0 +1,31 @@
+{
+  "name": "backend-ong",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Renan2583/Backend_ong.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Renan2583/Backend_ong/issues"
+  },
+  "homepage": "https://github.com/Renan2583/Backend_ong#readme",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.15.3"
+  }
+}

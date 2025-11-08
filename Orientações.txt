@@ -1,0 +1,10 @@
+ADICIONAR O ARQUIVO ".ENV" NA RAIZ e PREENCHER COM OS DADOS DO BANCO LOCAL SEU
+
+PORT = 3000
+DB_PORT = 3306
+DB_USER = root
+DB_PASS = ''
+DB_NAME = bd_ong
+
+JWT_SECRET=este_e_um_segredo_muito_longo_e_dificil_de_adivinhar_12345
+JWT_EXPIRES_IN=1d

@@ -1,0 +1,71 @@
+ENDPOINTS - (Base: http://localhost:3000)
+
+👨‍👩‍👧‍👦 /pessoas
+POST /pessoas (Cria uma pessoa)
+GET /pessoas (Lista todas as pessoas)
+GET /pessoas/:id (Busca uma pessoa)
+PUT /pessoas/:id (Atualiza uma pessoa)
+DELETE /pessoas/:id (Desativa [Soft Delete] uma pessoa)
+
+🐶 /especies
+(o frontend provavelmente só vai usar os GETs, já que Cachorro e Gato são fixos).
+POST /especies (Cria uma espécie) 
+GET /especies (Lista todas as espécies)
+GET /especies/:id (Busca uma espécie) 
+PUT /especies/:id (Atualiza uma espécie) 
+DELETE /especies/:id (Desativa [Soft Delete] uma espécie)
+
+
+🦴 /recursos
+POST /recursos (Cria um recurso/item)
+GET /recursos (Lista todos os recursos do inventário)
+GET /recursos/:id (Busca um recurso)
+PUT /recursos/:id (Atualiza um recurso)
+DELETE /recursos/:id (Desativa [Soft Delete] um recurso)
+
+🧬 /racas
+POST /racas (Cria uma raça)
+GET /racas (Lista todas as raças)
+GET /racas/especie/:especieId (Busca raças de uma espécie específica)
+GET /racas/:id (Busca uma raça)
+PUT /racas/:id (Atualiza uma raça)
+DELETE /racas/:id (Desativa [Soft Delete] uma raça)
+
+👨‍⚕️ /veterinarios
+POST /veterinarios (Promove uma pessoa a veterinário)
+GET /veterinarios (Lista todos os veterinários)
+GET /veterinarios/:id (Busca um veterinário)
+PUT /veterinarios/:id (Atualiza o CRMV de um veterinário)
+DELETE /veterinarios/:id (Desativa [Soft Delete] um veterinário)
+
+🐕 /animais
+POST /animais (Cria um animal)
+GET /animais (Lista todos os animais)
+GET /animais/:id (Busca um animal)
+PUT /animais/:id (Atualiza um animal)
+DELETE /animais/:id (Desativa [Soft Delete] um animal)
+
+💖 /doacoes
+POST /doacoes (Cria uma doação [Monetária ou Itens])
+GET /doacoes (Lista todas as doações)
+GET /doacoes/pessoa/:pessoaId (Busca doações de uma pessoa)
+GET /doacoes/recurso/:recursoId (Busca doações que contêm um recurso)
+GET /doacoes/:id (Busca uma doação)
+DELETE /doacoes/:id (Desativa [Soft Delete] uma doação)
+
+
+🩺 /atendimentos
+POST /atendimentos (Cria um registro de atendimento)
+GET /atendimentos/animal/:animalId (Lista o prontuário de um animal)
+GET /atendimentos/:id (Busca um atendimento específico)
+PUT /atendimentos/:id (Atualiza um atendimento)
+DELETE /atendimentos/:id (Deleta [Hard Delete] um atendimento)
+
+🏠 /adocoes
+POST /adocoes (Registra uma adoção)
+GET /adocoes (Lista todas as adoções)
+GET /adocoes/animal/:animalId (Busca a adoção de um animal)
+GET /adocoes/pessoa/:pessoaId (Busca adoções de uma pessoa)
+GET /adocoes/:id (Busca um registro de adoção)
+PUT /adocoes/:id (Atualiza um registro de adoção)
+DELETE /adocoes/:id (Deleta [Hard Delete] um registro de adoção)
