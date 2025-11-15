@@ -1,12 +1,22 @@
 import pool from "../config/db.js";
 
+
+export async function findPessoaByCpf(cpf) {
+    const [rows] = await pool.query(
+        "SELECT * FROM pessoas WHERE cpf = ? AND isDeleted = FALSE",
+        [cpf]
+    );
+    return rows[0]; 
+}
+
+
 export async function createPessoa(pessoa) {
-    const { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado } = pessoa;
+    const { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado, senha, tipo } = pessoa;
     
     
     const [result] = await pool.query(
-        "INSERT INTO pessoas (nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado]
+        "INSERT INTO pessoas (nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado,senha,tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)",
+        [nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado,senha,tipo]
     ); 
     
     return result.insertId;

@@ -5,29 +5,32 @@ import {
     updatePessoa,
     deletePessoa,
 } from "../repositories/pessoas.repo.js";
+import bcrypt from 'bcrypt';
 
 export async function createPessoaController(req, res) {
     try {
-        const { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado } = req.body;
+        
+        const { senha, ...dadosPessoa } = req.body;
 
-      
-        if (!nome || !cpf || !dataNasc || !telefone || !email || !cep || !logradouro || !numero || !cidade || !estado) {
-            return res.status(400).json({ error: "Dados incompletos. Verifique os campos obrigatórios." });
+        
+        if (!senha) {
+            return res.status(400).json({ error: "A 'senha' é obrigatória." });
         }
         
+        const salt = await bcrypt.genSalt(10);
+        const senhaHash = await bcrypt.hash(senha, salt);
 
-        const novoId = await createPessoa({ nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado });
         
-        
+        const novoId = await createPessoa({ 
+            ...dadosPessoa, 
+            senha: senhaHash, 
+            tipo: 'User' 
+        });
+
         res.status(201).json({ id: novoId });
 
     } catch (error) {
         console.error("Erro em createPessoaController:", error);
-        
-        
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ error: "CPF ou Email já cadastrado." }); 
-        }
         
         res.status(500).json({ error: "Erro ao criar pessoa" });
     }

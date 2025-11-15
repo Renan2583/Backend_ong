@@ -11,22 +11,21 @@ export async function createRacaController(req, res) {
     try {
         const { nome, especiesId } = req.body;
 
-        // --- VALIDAÇÃO DE ENTRADA (ERRO 400) ---
-        // Valida os campos obrigatórios
+        
         if (!nome || !especiesId) {
             return res.status(400).json({
                 error: "Dados incompletos. 'nome' e 'especiesId' são obrigatórios.",
             });
         }
-        // --- FIM VALIDAÇÃO ---
+      
 
-        // O 'req.body' inteiro é passado para a função do repo
+        
         const novoId = await createRaca(req.body);
 
         res.status(201).json({ id: novoId });
     } catch (error) {
         console.error("Erro em createRacaController:", error);
-        // Verifica erro de chave estrangeira (ex: especiesId não existe)
+       
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res
                 .status(404)
@@ -51,11 +50,10 @@ export async function getRacaByIdController(req, res) {
         const { id } = req.params;
         const raca = await getRacaById(id);
 
-        // --- VALIDAÇÃO DE RESULTADO (ERRO 404) ---
         if (!raca) {
             return res.status(404).json({ error: "Raça não encontrada." });
         }
-        // --- FIM VALIDAÇÃO ---
+       
 
         res.status(200).json(raca);
     } catch (error) {
@@ -69,23 +67,23 @@ export async function updateRacaController(req, res) {
         const { id } = req.params;
         const { nome, especiesId } = req.body;
 
-        // --- VALIDAÇÃO DE ENTRADA (ERRO 400) ---
+        
         if (!nome || !especiesId) {
             return res.status(400).json({
                 error: "Dados incompletos. 'nome' e 'especiesId' são obrigatórios.",
             });
         }
-        // --- FIM VALIDAÇÃO ---
+        
 
         const affectedRows = await updateRaca(id, req.body);
 
-        // --- VALIDAÇÃO DE RESULTADO (ERRO 404) ---
+        
         if (affectedRows === 0) {
             return res
                 .status(404)
                 .json({ error: "Raça não encontrada para atualizar." });
         }
-        // --- FIM VALIDAÇÃO ---
+        
 
         res.status(200).json({ message: "Raça atualizada com sucesso." });
     } catch (error) {
@@ -104,13 +102,13 @@ export async function deleteRacaController(req, res) {
         const { id } = req.params;
         const affectedRows = await deleteRaca(id);
 
-        // --- VALIDAÇÃO DE RESULTADO (ERRO 404) ---
+        
         if (affectedRows === 0) {
             return res
                 .status(404)
                 .json({ error: "Raça não encontrada para deletar." });
         }
-        // --- FIM VALIDAÇÃO ---
+        
 
         res.status(204).send();
     } catch (error) {
@@ -119,14 +117,14 @@ export async function deleteRacaController(req, res) {
     }
 }
 
-// --- Controller especial para o Frontend ---
+
 
 export async function getRacasByEspecieController(req, res) {
     try {
         const { especieId } = req.params;
         const racas = await getRacasByEspecie(especieId);
         
-        // Não precisa de 404 aqui, um array vazio [] é uma resposta válida.
+        
         res.status(200).json(racas);
 
     } catch (error) {

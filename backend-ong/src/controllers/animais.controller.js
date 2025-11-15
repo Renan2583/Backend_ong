@@ -10,21 +10,19 @@ export async function createAnimalController(req, res) {
     try {
         const { nome, racasId } = req.body;
 
-        // --- VALIDAÇÃO DE ENTRADA (ERRO 400) ---
+        
         if (!nome || !racasId) {
             return res.status(400).json({
                 error: "Dados incompletos. 'nome' e 'racasId' são obrigatórios.",
             });
         }
-        // --- FIM VALIDAÇÃO ---
-
-        // Passa o req.body inteiro (incluindo o fotoUrl) para o repo
+       
         const novoId = await createAnimal(req.body);
         res.status(201).json({ id: novoId });
 
     } catch (error) {
         console.error("Erro em createAnimalController:", error);
-        // Erro se o 'racasId' não existir na tabela 'racas'
+        
         if (error.code === "ER_NO_REFERENCED_ROW_2") {
             return res
                 .status(404)
@@ -65,13 +63,13 @@ export async function updateAnimalController(req, res) {
         const { id } = req.params;
         const { nome, racasId } = req.body;
 
-        // --- VALIDAÇÃO DE ENTRADA (ERRO 400) ---
+        
         if (!nome || !racasId) {
             return res.status(400).json({
                 error: "Dados incompletos. 'nome' e 'racasId' são obrigatórios.",
             });
         }
-        // --- FIM VALIDAÇÃO ---
+       
 
         const affectedRows = await updateAnimal(id, req.body);
 
