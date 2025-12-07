@@ -1,10 +1,10 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import AuthProvider from './components/AuthProvider.jsx';
-import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from './components/Navbar.jsx';
 import Login from "./pages/Login";
 import Home from "./pages/Home";
+import Caes from "./pages/Caes";
 
 function App() {
 
@@ -13,28 +13,18 @@ function App() {
       <Router>
         <AuthProvider>
           <div className="App">
-            <Navbar />
+            {!Home && <Navbar />}
 
             <Routes>
               <Route path="/login" element={<Login />} />
 
               <Route path="/" element={
-                // <ProtectedRoute>
-                  <Home />
-                // </ProtectedRoute>
+                <Home />
+              } />
+              <Route path="/Caes" element={
+                <Caes />
               } />
 
-              {/* <Route path="/produtos" element={
-                <ProtectedRoute roles={['admin', 'operador']}>
-                  <ProdutosPage />
-                </ProtectedRoute>
-              } /> */}
-
-              {/* <Route path="/pedidos" element={
-                <ProtectedRoute roles={['admin', 'operador']}>
-                  <PedidosPage />
-                </ProtectedRoute>
-              } /> */}
             </Routes>
           </div>
         </AuthProvider>

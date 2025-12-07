@@ -2,3 +2,88 @@
   margin: 0;
   padding: 0;
 }
+
+.hero-duo {
+  display: flex;
+  width: 100%;
+}
+
+.hero-item img {
+  mask-image: linear-gradient(to right,
+      transparent 10%,
+      black 30%,
+      black 100%,
+      black 100%,
+      black 100%);
+}
+
+.hero-item:first-of-type img {
+  mask-image: linear-gradient(to left,
+      transparent 10%,
+      black 50%,
+      black 100%,
+      black 100%);
+}
+
+
+
+.hero-item {
+  position: relative;
+  width: 50%;
+  overflow: hidden;
+  height: 90vh;
+  text-decoration: none;
+}
+
+.hero-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.hero-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 97, 107, 0.35);
+  transition: background 0.4s ease;
+}
+
+.hero-text {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  color: white;
+  font-family: sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.hero-item:hover img {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+  
+}
+
+.hero-item:hover::after {
+  background: rgba(0, 0, 0, 0.15);
+
+}
+
+nav.navbar-bg {
+  background-color: #47b7f7;
+  /*
+    #f15d5d - rgb(241, 93, 93)
+    #c8f5fa - rgb(200, 245, 250)
+    #fea932 - rgb(254, 169, 50)
+    #6d3e22 - rgb(109, 62, 34)
+    #fde4c4 - rgb(253, 228, 196)
+  */
+}
+
+nav img {
+  width: 5vw;
+}
