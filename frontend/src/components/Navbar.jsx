@@ -1,65 +1,85 @@
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../hooks/useAuth.js';
-import ongSVG from '../assets/ong-adapv.svg'
-import "../styles/global.css"
+import { getMenuItems } from '../utils/permissions.js';
+import ongSVG from '../assets/ong-adapv.svg';
+import "../styles/global.css";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     if (window.confirm('Deseja sair do sistema?')) {
       await logout();
+      navigate('/login');
     }
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Obtém os itens do menu baseado nas permissões do usuário
+  const menuItems = getMenuItems(user);
+
   return (
     <nav className="navbar navbar-bg">
-      <Link className="navbar-brand" to="/">
-        <img src={ongSVG} className="d-inline-block p-2 align-center" alt="Ong ADAPV SVG" />
-        <strong>ONG ADAPV</strong>
-      </Link>
-      <button
-        className="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span className="navbar-toggler-icon"></span>
-      </button>
-      <div className="collapse navbar-collapse" id="navbarNav">
-        <ul className="navbar-nav ms-auto">
-          <li className="nav-item">
-            <Link className="nav-link" to="/Animais">
-              Animais
-            </Link>
-          </li>
-          {user && (
-            <>
-              <li className="nav-item">
-                <Link className="nav-link" to="/Inscricoes">
-                  Vagas
+      <div className="navbar-container">
+        <Link className="navbar-brand" to="/">
+          <img src={ongSVG} className="navbar-logo" alt="Ong ADAPV SVG" />
+          <strong>ONG ADAPV</strong>
+        </Link>
+
+        
+        <button
+          className="navbar-toggle"
+          type="button"
+          onClick={toggleMenu}
+          aria-label="Toggle navigation"
+        >
+          <span className={`hamburger ${isMenuOpen ? 'active' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+
+        {/* Menu */}
+        <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
+          <ul className="navbar-nav">
+            {menuItems.map((item) => (
+              <li key={item.path} className="nav-item">
+                <Link 
+                  className="nav-link" 
+                  to={item.path}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  {item.label.replace(item.icon + ' ', '')}
                 </Link>
               </li>
-              <div className="navbar-nav">
-                <span className="navbar-text me-3">
-                  Olá, {user.email} ({user.role})
-                </span>
-                <button
-                  className="btn btn-outline-light btn-sm"
-                  onClick={handleLogout}
-                >
-                  Sair
-                </button>
-              </div>
-            </>
+            ))}
+          </ul>
+
+         
+          {user && (
+            <div className="navbar-user">
+              <span className="user-info">
+                Olá, <strong>{user.nome || user.email}</strong>
+                <span className="user-type">({user.tipo || 'Usuário'})</span>
+              </span>
+              <button
+                className="btn-logout"
+                onClick={handleLogout}
+              >
+                Sair
+              </button>
+            </div>
           )}
-
-        </ul>
-
+        </div>
       </div>
-    </nav >
+    </nav>
   );
 }

@@ -1,32 +1,33 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { canAccessRoute } from '../utils/permissions';
 
-const ProtectedRoute = ({ children, roles = [] }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </div>
-      </div>
-    );
+    return <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      fontSize: '1.2rem'
+    }}>Carregando...</div>;
   }
 
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles.length > 0 && !roles.includes(user.role)) {
-    return (
-      <div className="container mt-5">
-        <div className="alert alert-danger">
-          <h4>Acesso Negado</h4>
-          <p>Você não tem permissão para acessar esta página.</p>
-        </div>
-      </div>
-    );
+  // Verifica se o usuário tem permissão para acessar a rota
+  if (!canAccessRoute(user, location.pathname)) {
+    return <Navigate to="/home" replace />;
+  }
+
+  // Se a rota requer admin e o usuário não é admin
+  if (requireAdmin && user?.tipo !== 'Admin') {
+    return <Navigate to="/home" replace />;
   }
 
   return children;

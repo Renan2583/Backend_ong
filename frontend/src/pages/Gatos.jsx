@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import apiService from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/global.css';
-import './Caes.css';
+import './Caes.css'; // Reutilizando o mesmo CSS
 
-const Caes = () => {
+const Gatos = () => {
   const { user } = useAuth();
   const [animais, setAnimais] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,16 +25,17 @@ const Caes = () => {
     setLoading(true);
     setError('');
     try {
-      // Buscar todos os animais e filtrar por espécie "Cachorro" e sem tutor
+      // Buscar todos os animais e filtrar por espécie "Gato" e sem tutor
       const allAnimais = await apiService.getAnimais();
-      const caesDisponiveis = allAnimais.filter(animal => 
+      const gatosDisponiveis = allAnimais.filter(animal => 
         animal.especieNome && 
-        animal.especieNome.toLowerCase().includes('cachorro') && 
+        (animal.especieNome.toLowerCase().includes('gato') || 
+         animal.especieNome.toLowerCase().includes('felino')) && 
         !animal.pessoaId // Animais sem tutor estão disponíveis para adoção
       );
-      setAnimais(caesDisponiveis);
+      setAnimais(gatosDisponiveis);
     } catch (err) {
-      setError('Erro ao carregar cães disponíveis para adoção');
+      setError('Erro ao carregar gatos disponíveis para adoção');
       console.error(err);
     } finally {
       setLoading(false);
@@ -97,7 +98,7 @@ const Caes = () => {
   if (loading) {
     return (
       <div className="animais-container">
-        <h1>Cães Disponíveis para Adoção</h1>
+        <h1>Gatos Disponíveis para Adoção</h1>
         <p>Carregando...</p>
       </div>
     );
@@ -106,7 +107,7 @@ const Caes = () => {
   if (error) {
     return (
       <div className="animais-container">
-        <h1>Cães Disponíveis para Adoção</h1>
+        <h1>Gatos Disponíveis para Adoção</h1>
         <div className="alert alert-error">{error}</div>
       </div>
     );
@@ -114,10 +115,10 @@ const Caes = () => {
 
   return (
     <div className="animais-container">
-      <h1>Cães Disponíveis para Adoção</h1>
+      <h1>Gatos Disponíveis para Adoção</h1>
       
       {animais.length === 0 ? (
-        <p className="no-animals">Nenhum cão disponível para adoção no momento.</p>
+        <p className="no-animals">Nenhum gato disponível para adoção no momento.</p>
       ) : (
         <div className="animais-grid">
           {animais.map((animal) => (
@@ -135,7 +136,7 @@ const Caes = () => {
                 />
               ) : (
                 <div className="animal-photo-placeholder">
-                  <span>🐕</span>
+                  <span>🐱</span>
                   <p>Sem foto</p>
                 </div>
               )}
@@ -234,4 +235,5 @@ const Caes = () => {
   );
 };
 
-export default Caes;
+export default Gatos;
+

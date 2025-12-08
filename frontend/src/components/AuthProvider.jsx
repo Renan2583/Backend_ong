@@ -21,20 +21,23 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    await apiService.login(email, password);
-    await checkAuth();
-    return true;
-
+  const login = async (cpf, senha) => {
+    try {
+      await apiService.login(cpf, senha);
+      await checkAuth();
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = async () => {
     try {
       await apiService.logout();
+      setUser(null);
     } catch (error) {
       console.error('Erro no logout:', error);
-    } finally {
-      setUser(null);
+      setUser(null); // Garante que o usuário é deslogado mesmo se houver erro
     }
   };
 
