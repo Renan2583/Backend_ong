@@ -26,9 +26,11 @@ export async function getAtendimentosByAnimalId(animalId) {
         `
         SELECT 
             at.*, 
+            an.nome AS animalNome,
             p.nome AS veterinarioNome,
             v.CRMV
         FROM atendimentos at
+        JOIN animais an ON at.animalId = an.id
         LEFT JOIN veterinarios v ON at.veterinarioId = v.id
         LEFT JOIN pessoas p ON v.pessoaId = p.id
         WHERE at.animalId = ?

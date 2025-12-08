@@ -93,9 +93,16 @@ export async function getAdocoesByPessoaId(pessoaId) {
         `
         SELECT 
             ad.*,
-            an.nome AS animalNome
+            an.nome AS animalNome,
+            an.fotoUrl AS animalFotoUrl,
+            an.cor AS animalCor,
+            an.dataNasc AS animalDataNasc,
+            r.nome AS racaNome,
+            e.nome AS especieNome
         FROM adocoes ad
         JOIN animais an ON ad.animalId = an.id
+        JOIN racas r ON an.racasId = r.id
+        JOIN especies e ON r.especiesId = e.id
         WHERE ad.pessoaId = ?
         ORDER BY ad.dataAdocao DESC
     `,

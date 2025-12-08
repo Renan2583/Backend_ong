@@ -21,7 +21,8 @@ export async function getAnimais() {
             a.nome,
             a.cor,
             a.dataNasc,
-            a.fotoUrl, -- Adicionado
+            a.fotoUrl,
+            a.pessoaId, -- Adicionado para verificar se tem tutor
             r.nome AS racaNome,
             e.nome AS especieNome
         FROM animais a
