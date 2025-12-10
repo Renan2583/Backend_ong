@@ -5,12 +5,14 @@ import {
     getRecursoByIdController,
     updateRecursoController,
     deleteRecursoController,
+    getRelatorioRecursosController,
 } from "../controllers/recursos.controller.js";
 
 const router = Router();
 
 router.post("/", createRecursoController);
 router.get("/", getRecursosController);
+router.get("/relatorio", getRelatorioRecursosController);
 router.get("/:id", getRecursoByIdController);
 router.put("/:id", updateRecursoController);
 router.delete("/:id", deleteRecursoController);

@@ -2,17 +2,21 @@ import { Router } from "express";
 import { 
     createDoacaoController, 
     getDoacoesController, 
-    getDoacaoByIdController, 
+    getDoacaoByIdController,
+    updateDoacaoController,
     deleteDoacaoController, 
     getDoacoesByPessoaController, 
-    getDoacoesByRecursoController 
+    getDoacoesByRecursoController,
+    getRelatorioDoacoesController
 } from "../controllers/doacoes.controller.js";
 
 const router = Router();
 
 router.post("/", createDoacaoController);
 router.get("/", getDoacoesController);
+router.get("/relatorio", getRelatorioDoacoesController);
 router.get("/:id", getDoacaoByIdController);
+router.put("/:id", updateDoacaoController);
 router.delete("/:id", deleteDoacaoController);
 
 

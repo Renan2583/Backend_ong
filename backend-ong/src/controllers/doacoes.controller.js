@@ -2,9 +2,11 @@ import {
     createDoacao,
     getDoacoes,
     getDoacaoById,
+    updateDoacao,
     deleteDoacao,
     getDoacoesByPessoa,
     getDoacoesByRecurso,
+    getRelatorioDoacoes,
 } from "../repositories/doacoes.repo.js";
 
 export async function createDoacaoController(req, res) {
@@ -20,10 +22,10 @@ export async function createDoacaoController(req, res) {
         }
 
        
-        if (tipo === "Monetaria") {
+        if (tipo === "Monetária" || tipo === "Monetaria") {
             if (!valor || valor <= 0) {
                 return res.status(400).json({
-                    error: "Para doação 'Monetaria', o 'valor' é obrigatório e deve ser maior que zero.",
+                    error: "Para doação 'Monetária', o 'valor' é obrigatório e deve ser maior que zero.",
                 });
             }
         } else if (tipo === "Itens") {
@@ -34,9 +36,9 @@ export async function createDoacaoController(req, res) {
             }
             
             for (const item of itens) {
-                if (!item.recursoId || !item.quantidade || item.quantidade <= 0) {
+                if (!item.nome || !item.valor || item.valor <= 0 || !item.quantidade || item.quantidade <= 0) {
                     return res.status(400).json({
-                        error: "Cada item na doação deve ter 'recursoId' e 'quantidade' (maior que zero).",
+                        error: "Cada item na doação deve ter 'nome', 'valor' (maior que zero) e 'quantidade' (maior que zero).",
                     });
                 }
             }
@@ -78,6 +80,49 @@ export async function getDoacaoByIdController(req, res) {
     } catch (error) {
         console.error("Erro em getDoacaoByIdController:", error);
         res.status(500).json({ error: "Erro ao buscar doação." });
+    }
+}
+
+export async function updateDoacaoController(req, res) {
+    try {
+        const { id } = req.params;
+        const doacaoData = req.body;
+        const { dataDoacao, tipo, valor, itens } = doacaoData;
+
+        if (!dataDoacao || !tipo) {
+            return res.status(400).json({
+                error: "Dados incompletos. 'dataDoacao' e 'tipo' são obrigatórios.",
+            });
+        }
+
+        if (tipo === "Monetária" || tipo === "Monetaria") {
+            if (!valor || valor <= 0) {
+                return res.status(400).json({
+                    error: "Para doação 'Monetária', o 'valor' é obrigatório e deve ser maior que zero.",
+                });
+            }
+        } else if (tipo === "Itens") {
+            if (!itens || !Array.isArray(itens) || itens.length === 0) {
+                return res.status(400).json({
+                    error: "Para doação 'Itens', o array 'itens' é obrigatório e não pode estar vazio.",
+                });
+            }
+            
+            for (const item of itens) {
+                if (!item.nome || !item.valor || item.valor <= 0 || !item.quantidade || item.quantidade <= 0) {
+                    return res.status(400).json({
+                        error: "Cada item na doação deve ter 'nome', 'valor' (maior que zero) e 'quantidade' (maior que zero).",
+                    });
+                }
+            }
+        }
+
+        await updateDoacao(id, doacaoData);
+        res.status(200).json({ message: "Doação atualizada com sucesso." });
+
+    } catch (error) {
+        console.error("Erro em updateDoacaoController:", error);
+        res.status(500).json({ error: "Erro ao atualizar doação." });
     }
 }
 
@@ -126,5 +171,15 @@ export async function getDoacoesByRecursoController(req, res) {
     } catch (error) {
         console.error("Erro em getDoacoesByRecursoController:", error);
         res.status(500).json({ error: "Erro ao buscar doações por recurso." });
+    }
+}
+
+export async function getRelatorioDoacoesController(req, res) {
+    try {
+        const relatorio = await getRelatorioDoacoes();
+        res.status(200).json(relatorio);
+    } catch (error) {
+        console.error("Erro em getRelatorioDoacoesController:", error);
+        res.status(500).json({ error: "Erro ao gerar relatório de doações." });
     }
 }

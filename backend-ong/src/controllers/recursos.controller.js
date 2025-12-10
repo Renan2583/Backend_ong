@@ -4,11 +4,12 @@ import {
     getRecursoById,
     updateRecurso,
     deleteRecurso,
+    getRelatorioRecursos,
 } from "../repositories/recursos.repo.js";
 
 export async function createRecursoController(req, res) {
     try {
-        const { tipo, nome, quantidade, descricao } = req.body;
+        const { tipo, nome, quantidade, valor, descricao } = req.body;
 
        
         if (!tipo || !nome) {
@@ -28,6 +29,7 @@ export async function createRecursoController(req, res) {
             tipo,
             nome,
             quantidade,
+            valor: valor || 0,
             descricao,
         });
 
@@ -69,7 +71,7 @@ export async function getRecursoByIdController(req, res) {
 export async function updateRecursoController(req, res) {
     try {
         const { id } = req.params;
-        const { tipo, nome, quantidade, descricao } = req.body; // 
+        const { tipo, nome, quantidade, valor, descricao } = req.body; // 
 
        
         if (!tipo || !nome || (quantidade === undefined || quantidade === null)) {
@@ -83,6 +85,7 @@ export async function updateRecursoController(req, res) {
             tipo,
             nome,
             quantidade,
+            valor: valor || 0,
             descricao,
         });
 
@@ -119,5 +122,15 @@ export async function deleteRecursoController(req, res) {
     } catch (error) {
         console.error("Erro em deleteRecursoController:", error);
         res.status(500).json({ error: "Erro ao deletar recurso." });
+    }
+}
+
+export async function getRelatorioRecursosController(req, res) {
+    try {
+        const relatorio = await getRelatorioRecursos();
+        res.status(200).json(relatorio);
+    } catch (error) {
+        console.error("Erro em getRelatorioRecursosController:", error);
+        res.status(500).json({ error: "Erro ao gerar relatório de recursos." });
     }
 }

@@ -7,6 +7,7 @@ import {
     getAdocoesByPessoaIdController,
     updateAdocaoController,
     deleteAdocaoController,
+    getRelatorioAdocoesController,
 } from "../controllers/adocoes.controller.js";
 
 const router = Router();
@@ -16,6 +17,9 @@ router.post("/", createAdocaoController);
 
 // Rota para LISTAR TODAS as adoções
 router.get("/", getAdocoesController);
+
+// Rota para relatório de adoções
+router.get("/relatorio", getRelatorioAdocoesController);
 
 // Rota Bônus: Buscar adoção POR ANIMAL
 router.get("/animal/:animalId", getAdocaoByAnimalIdController);

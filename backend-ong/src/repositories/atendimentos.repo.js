@@ -88,3 +88,34 @@ export async function deleteAtendimento(id) {
     );
     return result.affectedRows;
 }
+
+// Relatório de atendimentos
+export async function getRelatorioAtendimentos() {
+    const [rows] = await pool.query(`
+        SELECT 
+            at.id AS atendimentoId,
+            at.dataAtendimento,
+            at.tipo,
+            at.descricao,
+            at.custo,
+            an.id AS animalId,
+            an.nome AS animalNome,
+            an.cor AS animalCor,
+            an.dataNasc AS animalDataNasc,
+            an.fotoUrl AS animalFotoUrl,
+            r.nome AS racaNome,
+            e.nome AS especieNome,
+            p.id AS veterinarioId,
+            p.nome AS veterinarioNome,
+            v.CRMV AS veterinarioCRMV
+        FROM atendimentos at
+        INNER JOIN animais an ON at.animalId = an.id
+        LEFT JOIN racas r ON an.racasId = r.id
+        LEFT JOIN especies e ON r.especiesId = e.id
+        LEFT JOIN veterinarios v ON at.veterinarioId = v.id
+        LEFT JOIN pessoas p ON v.pessoaId = p.id
+        WHERE an.isDeleted = FALSE
+        ORDER BY at.dataAtendimento DESC
+    `);
+    return rows;
+}

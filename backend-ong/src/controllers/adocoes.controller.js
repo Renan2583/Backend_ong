@@ -6,6 +6,7 @@ import {
     getAdocoesByPessoaId,
     updateAdocao,
     deleteAdocao,
+    getRelatorioAdocoes,
 } from "../repositories/adocoes.repo.js";
 
 export async function createAdocaoController(req, res) {
@@ -143,5 +144,15 @@ export async function getAdocoesByPessoaIdController(req, res) {
     } catch (error) {
         console.error("Erro em getAdocoesByPessoaIdController:", error);
         res.status(500).json({ error: "Erro ao buscar adoções da pessoa." });
+    }
+}
+
+export async function getRelatorioAdocoesController(req, res) {
+    try {
+        const relatorio = await getRelatorioAdocoes();
+        res.status(200).json(relatorio);
+    } catch (error) {
+        console.error("Erro em getRelatorioAdocoesController:", error);
+        res.status(500).json({ error: "Erro ao gerar relatório de adoções." });
     }
 }

@@ -127,3 +127,34 @@ export async function deleteAdocao(id) {
     const [result] = await pool.query("DELETE FROM adocoes WHERE id = ?", [id]);
     return result.affectedRows;
 }
+
+// Relatório de adoções
+export async function getRelatorioAdocoes() {
+    const [rows] = await pool.query(`
+        SELECT 
+            ad.id AS adocaoId,
+            ad.dataAdocao,
+            ad.termoAssinado,
+            ad.observacoes,
+            an.id AS animalId,
+            an.nome AS animalNome,
+            an.cor AS animalCor,
+            an.dataNasc AS animalDataNasc,
+            an.fotoUrl AS animalFotoUrl,
+            r.nome AS racaNome,
+            e.nome AS especieNome,
+            p.id AS pessoaId,
+            p.nome AS adotanteNome,
+            p.cpf AS adotanteCpf,
+            p.email AS adotanteEmail,
+            p.telefone AS adotanteTelefone
+        FROM adocoes ad
+        INNER JOIN animais an ON ad.animalId = an.id
+        INNER JOIN racas r ON an.racasId = r.id
+        INNER JOIN especies e ON r.especiesId = e.id
+        INNER JOIN pessoas p ON ad.pessoaId = p.id
+        WHERE an.isDeleted = FALSE AND p.isDeleted = FALSE
+        ORDER BY ad.dataAdocao DESC
+    `);
+    return rows;
+}

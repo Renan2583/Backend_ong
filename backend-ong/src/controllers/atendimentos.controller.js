@@ -4,6 +4,7 @@ import {
     getAtendimentoById,
     updateAtendimento,
     deleteAtendimento,
+    getRelatorioAtendimentos,
 } from "../repositories/atendimentos.repo.js";
 
 export async function createAtendimentoController(req, res) {
@@ -123,5 +124,15 @@ export async function deleteAtendimentoController(req, res) {
     } catch (error) {
         console.error("Erro em deleteAtendimentoController:", error);
         res.status(500).json({ error: "Erro ao deletar atendimento." });
+    }
+}
+
+export async function getRelatorioAtendimentosController(req, res) {
+    try {
+        const relatorio = await getRelatorioAtendimentos();
+        res.status(200).json(relatorio);
+    } catch (error) {
+        console.error("Erro em getRelatorioAtendimentosController:", error);
+        res.status(500).json({ error: "Erro ao gerar relatório de atendimentos." });
     }
 }
