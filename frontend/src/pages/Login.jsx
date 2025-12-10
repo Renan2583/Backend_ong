@@ -4,12 +4,44 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
 import './Login.css';
 
+// Lista de estados brasileiros
+const estadosBrasil = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+];
+
 const LoginPage = () => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -50,6 +82,22 @@ const LoginPage = () => {
     return value;
   };
 
+  const formatTelefone = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      if (numbers.length <= 10) {
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      } else {
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{5})(\d)/, '$1-$2');
+      }
+    }
+    return value;
+  };
+
   const handleCpfChange = (e) => {
     const formatted = formatCpf(e.target.value);
     setCpf(formatted);
@@ -71,11 +119,59 @@ const LoginPage = () => {
     }
   };
 
+  // Função para buscar CEP na API ViaCEP
+  const buscarCep = async (cep) => {
+    const cepLimpo = cep.replace(/\D/g, '');
+    
+    // Só busca se tiver 8 dígitos
+    if (cepLimpo.length !== 8) {
+      return;
+    }
+
+    setLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        setRegisterData(prev => ({
+          ...prev,
+          logradouro: data.logradouro || '',
+          bairro: data.bairro || '',
+          cidade: data.localidade || '',
+          estado: data.uf || ''
+        }));
+      } else {
+        setError('CEP não encontrado');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+      setError('Erro ao buscar CEP. Tente novamente.');
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
   const handleRegisterChange = (e) => {
     const { name, value } = e.target;
     if (name === 'cpf') {
       const formatted = formatCpf(value);
       setRegisterData({ ...registerData, cpf: formatted });
+    } else if (name === 'telefone') {
+      const formatted = formatTelefone(value);
+      setRegisterData({ ...registerData, telefone: formatted });
+    } else if (name === 'cep') {
+      // Formatar CEP
+      const numbers = value.replace(/\D/g, '');
+      const formatted = numbers.length <= 8 
+        ? numbers.replace(/(\d{5})(\d)/, '$1-$2')
+        : value;
+      setRegisterData({ ...registerData, cep: formatted });
+      
+      // Buscar CEP quando tiver 8 dígitos
+      if (numbers.length === 8) {
+        buscarCep(formatted);
+      }
     } else {
       setRegisterData({ ...registerData, [name]: value });
     }
@@ -107,7 +203,7 @@ const LoginPage = () => {
         nome: registerData.nome,
         cpf: registerData.cpf.replace(/\D/g, ''),
         dataNasc: registerData.dataNasc,
-        telefone: registerData.telefone || '',
+        telefone: registerData.telefone.replace(/\D/g, '') || '',
         email: registerData.email || '',
         cep: registerData.cep || '',
         logradouro: registerData.logradouro || '',
@@ -277,6 +373,7 @@ const LoginPage = () => {
                   placeholder="(00) 00000-0000"
                   value={registerData.telefone}
                   onChange={handleRegisterChange}
+                  maxLength={15}
                   disabled={loading}
                 />
               </div>
@@ -309,8 +406,10 @@ const LoginPage = () => {
                   placeholder="00000-000"
                   value={registerData.cep}
                   onChange={handleRegisterChange}
-                  disabled={loading}
+                  disabled={loading || loadingCep}
+                  maxLength={9}
                 />
+                {loadingCep && <small style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginTop: '0.25rem' }}>Buscando CEP...</small>}
               </div>
 
               <div className="form-group">
@@ -399,17 +498,21 @@ const LoginPage = () => {
                 <label htmlFor="estado-register" className="form-label">
                   Estado
                 </label>
-                <input
-                  type="text"
+                <select
                   className="form-input"
                   id="estado-register"
                   name="estado"
-                  placeholder="UF"
-                  maxLength={2}
                   value={registerData.estado}
                   onChange={handleRegisterChange}
                   disabled={loading}
-                />
+                >
+                  <option value="">Selecione o estado</option>
+                  {estadosBrasil.map(estado => (
+                    <option key={estado.sigla} value={estado.sigla}>
+                      {estado.sigla} - {estado.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">

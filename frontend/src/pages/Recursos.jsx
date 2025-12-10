@@ -10,7 +10,7 @@ const Recursos = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [formData, setFormData] = useState({ tipo: '', nome: '', quantidade: '', descricao: '' });
+  const [formData, setFormData] = useState({ tipo: '', nome: '', quantidade: '', valor: '', descricao: '' });
   const [editingId, setEditingId] = useState(null);
 
   const handleChange = (e) => {
@@ -25,7 +25,8 @@ const Recursos = () => {
     try {
       const dataToSend = {
         ...formData,
-        quantidade: parseInt(formData.quantidade) || 0
+        quantidade: parseInt(formData.quantidade) || 0,
+        valor: parseFloat(formData.valor) || 0
       };
       if (editingId) {
         await apiService.updateRecurso(editingId, dataToSend);
@@ -35,7 +36,7 @@ const Recursos = () => {
         await apiService.createRecurso(dataToSend);
         setSuccess('Recurso cadastrado com sucesso!');
       }
-      setFormData({ tipo: '', nome: '', quantidade: '', descricao: '' });
+      setFormData({ tipo: '', nome: '', quantidade: '', valor: '', descricao: '' });
       if (showList) handleListar();
     } catch (err) {
       setError(err.message || 'Erro ao salvar recurso');
@@ -53,6 +54,7 @@ const Recursos = () => {
           tipo: recurso.tipo || '',
           nome: recurso.nome || '',
           quantidade: recurso.quantidade || '',
+          valor: recurso.valor || '',
           descricao: recurso.descricao || ''
         });
         setEditingId(id);
@@ -82,7 +84,7 @@ const Recursos = () => {
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setFormData({ tipo: '', nome: '', quantidade: '', descricao: '' });
+    setFormData({ tipo: '', nome: '', quantidade: '', valor: '', descricao: '' });
   };
 
   const handleListar = async () => {
@@ -128,6 +130,19 @@ const Recursos = () => {
                 <label>Quantidade *</label>
                 <input type="number" name="quantidade" value={formData.quantidade} onChange={handleChange} required min="0" />
               </div>
+              <div className="form-group">
+                <label>Valor (R$) *</label>
+                <input 
+                  type="number" 
+                  name="valor" 
+                  value={formData.valor} 
+                  onChange={handleChange} 
+                  required 
+                  min="0" 
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
             <div className="form-group">
               <label>Descrição</label>
@@ -156,7 +171,7 @@ const Recursos = () => {
               {loading ? <p>Carregando...</p> : items.length === 0 ? <p>Nenhum recurso cadastrado.</p> : (
                 <table className="data-table">
                   <thead>
-                    <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Quantidade</th><th>Ações</th></tr>
+                    <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Quantidade</th><th>Valor (R$)</th><th>Ações</th></tr>
                   </thead>
                   <tbody>
                     {items.map((item) => (
@@ -165,6 +180,7 @@ const Recursos = () => {
                         <td>{item.tipo}</td>
                         <td>{item.nome}</td>
                         <td>{item.quantidade}</td>
+                        <td>R$ {item.valor ? parseFloat(item.valor).toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                             <button onClick={() => handleEdit(item.id)} className="btn-action btn-edit" title="Editar" disabled={loading}>✏️</button>

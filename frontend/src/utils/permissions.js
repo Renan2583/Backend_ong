@@ -14,8 +14,7 @@ export const USER_ROUTES = [
   '/Caes',
   '/Gatos',
   '/doacoes',
-  '/adocoes',
-  '/recursos'
+  '/adocoes'
 ];
 
 // Rotas permitidas apenas para administradores
@@ -25,7 +24,8 @@ export const ADMIN_ROUTES = [
   '/especies',
   '/racas',
   '/veterinarios',
-  '/atendimentos'
+  '/atendimentos',
+  '/relatorios'
 ];
 
 // Verifica se o usuário tem permissão para acessar uma rota
@@ -51,10 +51,11 @@ export const getMenuItems = (user) => {
     { path: '/especies', label: '🐶 Espécies', icon: '🐶', adminOnly: true },
     { path: '/racas', label: '🧬 Raças', icon: '🧬', adminOnly: true },
     { path: '/veterinarios', label: '👨‍⚕️ Veterinários', icon: '👨‍⚕️', adminOnly: true },
-    { path: '/recursos', label: '🦴 Recursos', icon: '🦴', adminOnly: false },
+    { path: '/recursos', label: '🦴 Recursos', icon: '🦴', adminOnly: true },
     { path: '/doacoes', label: '💖 Doações', icon: '💖', adminOnly: false },
     { path: '/atendimentos', label: '🩺 Atendimentos', icon: '🩺', adminOnly: true },
     { path: '/adocoes', label: '🏠 Adoções', icon: '🏠', adminOnly: false },
+    { path: '/relatorios', label: '📊 Relatórios', icon: '📊', adminOnly: true },
   ];
 
   if (!user) return [];

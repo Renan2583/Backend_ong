@@ -125,26 +125,55 @@ const Gatos = () => {
             <div 
               key={animal.id} 
               className="animal-card"
-              onClick={() => handleAnimalClick(animal)}
-              style={{ cursor: 'pointer' }}
             >
-              {animal.fotoUrl ? (
-                <img 
-                  src={animal.fotoUrl} 
-                  alt={animal.nome}
-                  className="animal-photo"
-                />
-              ) : (
-                <div className="animal-photo-placeholder">
-                  <span>🐱</span>
-                  <p>Sem foto</p>
+              <div 
+                onClick={() => handleAnimalClick(animal)}
+                style={{ cursor: 'pointer' }}
+              >
+                {animal.fotoUrl ? (
+                  <img 
+                    src={animal.fotoUrl} 
+                    alt={animal.nome}
+                    className="animal-photo"
+                  />
+                ) : (
+                  <div className="animal-photo-placeholder">
+                    <span>🐱</span>
+                    <p>Sem foto</p>
+                  </div>
+                )}
+                <div className="animal-info">
+                  <h3>{animal.nome}</h3>
+                  <p><strong>Raça:</strong> {animal.racaNome}</p>
+                  {animal.cor && <p><strong>Cor:</strong> {animal.cor}</p>}
                 </div>
-              )}
-              <div className="animal-info">
-                <h3>{animal.nome}</h3>
-                <p><strong>Raça:</strong> {animal.racaNome}</p>
-                {animal.cor && <p><strong>Cor:</strong> {animal.cor}</p>}
               </div>
+              {user && (
+                <button
+                  className="btn-adotar-card"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAnimalClick(animal);
+                  }}
+                  style={{
+                    width: '100%',
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    background: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    transition: 'background 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#218838'}
+                  onMouseLeave={(e) => e.target.style.background = '#28a745'}
+                >
+                  🏠 Adotar
+                </button>
+              )}
             </div>
           ))}
         </div>

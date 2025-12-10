@@ -16,6 +16,7 @@ import Recursos from "./pages/Recursos";
 import Doacoes from "./pages/Doacoes";
 import Atendimentos from "./pages/Atendimentos";
 import Adocoes from "./pages/Adocoes";
+import Relatorios from "./pages/Relatorios";
 
 function App() {
   return (
@@ -118,6 +119,14 @@ function App() {
                   <>
                     <Navbar />
                     <Adocoes />
+                  </>
+                </ProtectedRoute>
+              } />
+              <Route path="/relatorios" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <>
+                    <Navbar />
+                    <Relatorios />
                   </>
                 </ProtectedRoute>
               } />

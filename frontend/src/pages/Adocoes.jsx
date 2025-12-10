@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import apiService from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import './CrudPage.css';
+import './Relatorios.css';
 
 const Adocoes = () => {
   const { user } = useAuth();
@@ -153,64 +154,115 @@ const Adocoes = () => {
     }
   }, [user]);
 
-  // Se for usuário comum, mostrar apenas a lista
+  const [filtroNome, setFiltroNome] = useState('');
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR');
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Se for usuário comum, mostrar apenas a lista no padrão do relatório
   if (user?.tipo === 'User') {
+    const adocoesFiltradas = items.filter(item =>
+      item.animalNome?.toLowerCase().includes(filtroNome.toLowerCase()) ||
+      item.especieNome?.toLowerCase().includes(filtroNome.toLowerCase()) ||
+      item.racaNome?.toLowerCase().includes(filtroNome.toLowerCase())
+    );
+
     return (
-      <div className="crud-page">
-        <div className="crud-container">
-          <div className="crud-list-section" style={{ width: '100%' }}>
-            <h2>Minhas Adoções</h2>
-            {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
-            {showList && (
-              <div className="list-container">
-                {loading ? (
-                  <p>Carregando...</p>
-                ) : items.length === 0 ? (
-                  <p>Você ainda não realizou nenhuma adoção.</p>
-                ) : (
-                  <div className="adocoes-grid">
-                    {items.map((item) => (
-                      <div key={item.id} className="adocao-card">
-                        {item.animalFotoUrl ? (
-                          <img 
-                            src={item.animalFotoUrl} 
-                            alt={item.animalNome}
-                            className="adocao-animal-photo"
-                          />
-                        ) : (
-                          <div className="adocao-animal-photo-placeholder">
-                            <span>{item.especieNome?.toLowerCase().includes('gato') ? '🐱' : '🐕'}</span>
-                            <p>Sem foto</p>
-                          </div>
-                        )}
-                        <div className="adocao-info">
-                          <h3>{item.animalNome}</h3>
-                          <div className="adocao-details">
-                            <p><strong>Espécie:</strong> {item.especieNome}</p>
-                            <p><strong>Raça:</strong> {item.racaNome}</p>
-                            {item.animalCor && <p><strong>Cor:</strong> {item.animalCor}</p>}
-                            {item.animalDataNasc && (
-                              <p><strong>Data de Nascimento:</strong> {
-                                new Date(item.animalDataNasc).toLocaleDateString('pt-BR')
-                              }</p>
-                            )}
-                            <p><strong>Data de Adoção:</strong> {
-                              new Date(item.dataAdocao).toLocaleDateString('pt-BR')
-                            }</p>
-                            <p><strong>Termo Assinado:</strong> {item.termoAssinado ? 'Sim ✓' : 'Não'}</p>
-                            {item.observacoes && (
-                              <p><strong>Observações:</strong> {item.observacoes}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+      <div className="relatorios-page">
+        <div className="relatorios-container">
+          <h1 className="relatorios-title">🏠 Minhas Adoções</h1>
+          
+          {error && <div className="alert alert-error">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
+
+          {/* Filtro por nome */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <input
+              type="text"
+              placeholder="🔍 Filtrar por nome do animal, espécie ou raça..."
+              value={filtroNome}
+              onChange={(e) => setFiltroNome(e.target.value)}
+              style={{
+                width: '100%',
+                maxWidth: '400px',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '1rem'
+              }}
+            />
           </div>
+
+          {loading ? (
+            <div className="relatorios-loading">
+              <p>Carregando suas adoções...</p>
+            </div>
+          ) : adocoesFiltradas.length === 0 ? (
+            <p className="relatorio-empty">
+              {filtroNome ? 'Nenhuma adoção encontrada com o filtro aplicado.' : 'Você ainda não realizou nenhuma adoção.'}
+            </p>
+          ) : (
+            <div className="relatorio-cards">
+              {adocoesFiltradas.map((item) => (
+                <div key={item.id} className="relatorio-card">
+                  <div className="card-animal">
+                    <div className="animal-foto">
+                      {item.animalFotoUrl ? (
+                        <>
+                          <img 
+                            src={
+                              item.animalFotoUrl.startsWith('data:') || item.animalFotoUrl.startsWith('http')
+                                ? item.animalFotoUrl 
+                                : `data:image/jpeg;base64,${item.animalFotoUrl}`
+                            } 
+                            alt={item.animalNome}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              const placeholder = e.target.nextElementSibling;
+                              if (placeholder) placeholder.style.display = 'flex';
+                            }}
+                          />
+                          <div className="animal-foto-placeholder" style={{ display: 'none' }}>
+                            <span>{item.especieNome?.toLowerCase().includes('gato') ? '🐱' : '🐕'}</span>
+                            <span>Sem foto</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="animal-foto-placeholder">
+                          <span>{item.especieNome?.toLowerCase().includes('gato') ? '🐱' : '🐕'}</span>
+                          <span>Sem foto</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="animal-info">
+                      <h3>{item.animalNome}</h3>
+                      <p><strong>Espécie:</strong> {item.especieNome}</p>
+                      <p><strong>Raça:</strong> {item.racaNome}</p>
+                      {item.animalCor && <p><strong>Cor:</strong> {item.animalCor}</p>}
+                      {item.animalDataNasc && (
+                        <p><strong>Data de Nascimento:</strong> {formatDate(item.animalDataNasc)}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="card-adocao">
+                    <h4>📅 Informações da Adoção</h4>
+                    <p><strong>Data da Adoção:</strong> {formatDate(item.dataAdocao)}</p>
+                    <p><strong>Termo Assinado:</strong> {item.termoAssinado ? '✅ Sim' : '❌ Não'}</p>
+                    {item.observacoes && (
+                      <p><strong>Observações:</strong> {item.observacoes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );

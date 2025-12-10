@@ -8,7 +8,6 @@ const Doacoes = () => {
   const [showList, setShowList] = useState(false);
   const [items, setItems] = useState([]);
   const [pessoas, setPessoas] = useState([]);
-  const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -16,14 +15,62 @@ const Doacoes = () => {
     pessoaId: '', dataDoacao: '', tipo: 'Monetária', valor: '', descricao: '', itens: []
   });
   const [editingId, setEditingId] = useState(null);
+  const [novoItem, setNovoItem] = useState({ nome: '', valor: '', quantidade: '' });
 
   useEffect(() => {
-    apiService.getPessoas().then(setPessoas).catch(console.error);
-    apiService.getRecursos().then(setRecursos).catch(console.error);
-  }, []);
+    // Se for usuário comum, não precisa carregar lista de pessoas
+    if (user?.tipo === 'Admin') {
+      apiService.getPessoas().then(setPessoas).catch(console.error);
+    } else if (user?.tipo === 'User' && user?.id) {
+      // Usuário comum: preencher automaticamente com seus dados
+      setFormData(prev => ({
+        ...prev,
+        pessoaId: user.id.toString()
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'tipo' && value === 'Monetária') {
+      // Limpar itens quando mudar para Monetária
+      setFormData({ ...formData, tipo: value, itens: [] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleItemChange = (e) => {
+    setNovoItem({ ...novoItem, [e.target.name]: e.target.value });
+  };
+
+  const adicionarItem = () => {
+    if (!novoItem.nome || !novoItem.valor || !novoItem.quantidade) {
+      setError('Preencha todos os campos do item (nome, valor e quantidade)');
+      return;
+    }
+    if (parseFloat(novoItem.valor) <= 0 || parseInt(novoItem.quantidade) <= 0) {
+      setError('Valor e quantidade devem ser maiores que zero');
+      return;
+    }
+    const item = {
+      nome: novoItem.nome,
+      valor: parseFloat(novoItem.valor),
+      quantidade: parseInt(novoItem.quantidade)
+    };
+    setFormData({
+      ...formData,
+      itens: [...formData.itens, item]
+    });
+    setNovoItem({ nome: '', valor: '', quantidade: '' });
+    setError('');
+  };
+
+  const removerItem = (index) => {
+    setFormData({
+      ...formData,
+      itens: formData.itens.filter((_, i) => i !== index)
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -37,13 +84,20 @@ const Doacoes = () => {
         ? formData.dataDoacao.split('T')[0]
         : formData.dataDoacao || null;
       
+      // Validar itens se for doação de itens
+      if (formData.tipo === 'Itens' && (!formData.itens || formData.itens.length === 0)) {
+        setError('Adicione pelo menos um item para doação de itens');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         pessoaId: parseInt(formData.pessoaId),
         dataDoacao: formattedDate,
         tipo: formData.tipo,
         valor: formData.tipo === 'Monetária' ? parseFloat(formData.valor) : null,
         descricao: formData.descricao,
-        itens: formData.itens
+        itens: formData.tipo === 'Itens' ? formData.itens : []
       };
       if (editingId) {
         await apiService.updateDoacao(editingId, payload);
@@ -54,6 +108,7 @@ const Doacoes = () => {
         setSuccess('Doação cadastrada com sucesso!');
       }
       setFormData({ pessoaId: '', dataDoacao: '', tipo: 'Monetária', valor: '', descricao: '', itens: [] });
+      setNovoItem({ nome: '', valor: '', quantidade: '' });
       if (showList) handleListar();
     } catch (err) {
       setError(err.message || 'Erro ao salvar doação');
@@ -72,18 +127,31 @@ const Doacoes = () => {
 
   const handleEdit = async (id) => {
     try {
-      const doacoes = await apiService.getDoacoes();
-      const doacao = doacoes.find(d => d.id === id);
+      const doacao = await apiService.getDoacaoById(id);
       if (doacao) {
+        // Se for usuário comum, garantir que só pode editar suas próprias doações
+        if (user?.tipo === 'User' && doacao.doadorId !== user.id) {
+          setError('Você só pode editar suas próprias doações');
+          return;
+        }
+
+        // Formatar itens para o formato esperado
+        const itensFormatados = doacao.itens ? doacao.itens.map(item => ({
+          nome: item.nome || '',
+          valor: item.valor || 0,
+          quantidade: item.quantidade || 0
+        })) : [];
+        
         setFormData({
-          pessoaId: doacao.pessoaId || '',
+          pessoaId: doacao.doadorId || doacao.pessoaId || (user?.tipo === 'User' ? user.id.toString() : ''),
           dataDoacao: formatDateForInput(doacao.dataDoacao) || '',
           tipo: doacao.tipo || 'Monetária',
           valor: doacao.valor || '',
           descricao: doacao.descricao || '',
-          itens: doacao.itens || []
+          itens: itensFormatados
         });
         setEditingId(id);
+        setNovoItem({ nome: '', valor: '', quantidade: '' });
         setError('');
         setSuccess('');
         document.querySelector('.crud-form-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -111,6 +179,7 @@ const Doacoes = () => {
   const handleCancelEdit = () => {
     setEditingId(null);
     setFormData({ pessoaId: '', dataDoacao: '', tipo: 'Monetária', valor: '', descricao: '', itens: [] });
+    setNovoItem({ nome: '', valor: '', quantidade: '' });
   };
 
   const handleListar = async () => {
@@ -143,13 +212,34 @@ const Doacoes = () => {
           {success && <div className="alert alert-success">{success}</div>}
           <form onSubmit={handleSubmit}>
             <div className="form-row">
-              <div className="form-group">
-                <label>Doador *</label>
-                <select name="pessoaId" value={formData.pessoaId} onChange={handleChange} required>
-                  <option value="">Selecione</option>
-                  {pessoas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                </select>
-              </div>
+              {user?.tipo === 'Admin' ? (
+                <div className="form-group">
+                  <label>Doador *</label>
+                  <select name="pessoaId" value={formData.pessoaId} onChange={handleChange} required>
+                    <option value="">Selecione</option>
+                    {pessoas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Doador</label>
+                  <input 
+                    type="text" 
+                    value={user?.nome || 'Você'} 
+                    disabled 
+                    style={{ 
+                      background: '#f0f0f0', 
+                      cursor: 'not-allowed',
+                      opacity: 0.7
+                    }}
+                  />
+                  <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
+                    Você está doando como {user?.nome}
+                  </small>
+                  {/* Campo hidden para manter o pessoaId no formulário */}
+                  <input type="hidden" name="pessoaId" value={formData.pessoaId} />
+                </div>
+              )}
               <div className="form-group">
                 <label>Data *</label>
                 <input type="date" name="dataDoacao" value={formData.dataDoacao} onChange={handleChange} required />
@@ -165,11 +255,142 @@ const Doacoes = () => {
               </div>
               {formData.tipo === 'Monetária' && (
                 <div className="form-group">
-                  <label>Valor *</label>
-                  <input type="number" step="0.01" name="valor" value={formData.valor} onChange={handleChange} required />
+                  <label>Valor (R$) *</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    name="valor" 
+                    value={formData.valor} 
+                    onChange={handleChange} 
+                    required 
+                    min="0.01"
+                    placeholder="0.00"
+                  />
                 </div>
               )}
             </div>
+
+            {formData.tipo === 'Itens' && (
+              <div className="form-group" style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '4px' }}>
+                <label style={{ marginBottom: '0.5rem', display: 'block', fontWeight: 'bold' }}>
+                  Itens Doados *
+                </label>
+                
+                {/* Formulário para adicionar item */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '0.5rem', marginBottom: '1rem', alignItems: 'end' }}>
+                  <div>
+                    <label style={{ fontSize: '0.85rem' }}>Nome do Item</label>
+                    <input
+                      type="text"
+                      name="nome"
+                      value={novoItem.nome}
+                      onChange={handleItemChange}
+                      placeholder="Ex: Ração Premium"
+                      style={{ width: '100%', padding: '0.5rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem' }}>Valor (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="valor"
+                      value={novoItem.valor}
+                      onChange={handleItemChange}
+                      placeholder="0.00"
+                      min="0.01"
+                      style={{ width: '100%', padding: '0.5rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem' }}>Quantidade</label>
+                    <input
+                      type="number"
+                      name="quantidade"
+                      value={novoItem.quantidade}
+                      onChange={handleItemChange}
+                      placeholder="1"
+                      min="1"
+                      style={{ width: '100%', padding: '0.5rem' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={adicionarItem}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    + Adicionar
+                  </button>
+                </div>
+
+                {/* Lista de itens adicionados */}
+                {formData.itens.length > 0 && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '4px' }}>
+                      <thead>
+                        <tr style={{ background: '#007bff', color: 'white' }}>
+                          <th style={{ padding: '0.5rem', textAlign: 'left' }}>Item</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>Valor Unit.</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'center' }}>Qtd</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>Total</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'center' }}>Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.itens.map((item, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                            <td style={{ padding: '0.5rem' }}><strong>{item.nome}</strong></td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right' }}>
+                              R$ {parseFloat(item.valor).toFixed(2).replace('.', ',')}
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>{item.quantidade}</td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 'bold', color: '#28a745' }}>
+                              R$ {(parseFloat(item.valor) * parseInt(item.quantidade)).toFixed(2).replace('.', ',')}
+                            </td>
+                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => removerItem(index)}
+                                style={{
+                                  background: '#dc3545',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '0.25rem 0.5rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ background: '#f8f9fa', fontWeight: 'bold' }}>
+                          <td colSpan="3" style={{ padding: '0.5rem', textAlign: 'right' }}>TOTAL:</td>
+                          <td style={{ padding: '0.5rem', textAlign: 'right', color: '#28a745', fontSize: '1.1rem' }}>
+                            R$ {formData.itens.reduce((sum, item) => 
+                              sum + (parseFloat(item.valor) * parseInt(item.quantidade)), 0
+                            ).toFixed(2).replace('.', ',')}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="form-group">
               <label>Descrição</label>
               <textarea name="descricao" value={formData.descricao} onChange={handleChange} />
@@ -203,7 +424,13 @@ const Doacoes = () => {
                         <td>{item.id}</td>
                         <td>{new Date(item.dataDoacao).toLocaleDateString()}</td>
                         <td>{item.tipo}</td>
-                        <td>{item.tipo === 'Monetária' ? `R$ ${item.valor}` : 'Itens'}</td>
+                        <td>
+                          {item.tipo === 'Monetária' 
+                            ? `R$ ${parseFloat(item.valor || 0).toFixed(2).replace('.', ',')}` 
+                            : item.itens && item.itens.length > 0
+                            ? `${item.itens.length} item(ns) - Total: R$ ${item.itens.reduce((sum, i) => sum + (parseFloat(i.valor || 0) * parseInt(i.quantidade || 0)), 0).toFixed(2).replace('.', ',')}`
+                            : 'Itens'}
+                        </td>
                         <td>{item.doadorNome || '-'}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>

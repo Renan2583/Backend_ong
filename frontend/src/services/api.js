@@ -277,6 +277,10 @@ class ApiService {
         return this.request('/doacoes');
     }
 
+    async getDoacaoById(id) {
+        return this.request(`/doacoes/${id}`);
+    }
+
     async createDoacao(doacao) {
         return this.request('/doacoes', {
             method: 'POST',
@@ -353,6 +357,23 @@ class ApiService {
 
     async getDoacoesByPessoaId(pessoaId) {
         return this.request(`/doacoes/pessoa/${pessoaId}`);
+    }
+
+    // Relatórios
+    async getRelatorioDoacoes() {
+        return this.request('/doacoes/relatorio');
+    }
+
+    async getRelatorioRecursos() {
+        return this.request('/recursos/relatorio');
+    }
+
+    async getRelatorioAdocoes() {
+        return this.request('/adocoes/relatorio');
+    }
+
+    async getRelatorioAtendimentos() {
+        return this.request('/atendimentos/relatorio');
     }
 }
 

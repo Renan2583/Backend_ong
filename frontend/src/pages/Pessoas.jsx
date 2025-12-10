@@ -2,12 +2,44 @@ import { useState } from 'react';
 import apiService from '../services/api';
 import './CrudPage.css';
 
+// Lista de estados brasileiros
+const estadosBrasil = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+];
+
 const Pessoas = () => {
   const [showList, setShowList] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loadingCep, setLoadingCep] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -27,8 +59,93 @@ const Pessoas = () => {
   });
   const [editingId, setEditingId] = useState(null);
 
+  // Funções de formatação
+  const formatCpf = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return value;
+  };
+
+  const formatTelefone = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      if (numbers.length <= 10) {
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      } else {
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{5})(\d)/, '$1-$2');
+      }
+    }
+    return value;
+  };
+
+  const formatCep = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 8) {
+      return numbers.replace(/(\d{5})(\d)/, '$1-$2');
+    }
+    return value;
+  };
+
+  // Função para buscar CEP na API ViaCEP
+  const buscarCep = async (cep) => {
+    const cepLimpo = cep.replace(/\D/g, '');
+    
+    // Só busca se tiver 8 dígitos
+    if (cepLimpo.length !== 8) {
+      return;
+    }
+
+    setLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          logradouro: data.logradouro || '',
+          bairro: data.bairro || '',
+          cidade: data.localidade || '',
+          estado: data.uf || ''
+        }));
+      } else {
+        setError('CEP não encontrado');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar CEP:', err);
+      setError('Erro ao buscar CEP. Tente novamente.');
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    if (name === 'cpf') {
+      formattedValue = formatCpf(value);
+    } else if (name === 'telefone') {
+      formattedValue = formatTelefone(value);
+    } else if (name === 'cep') {
+      formattedValue = formatCep(value);
+      // Buscar CEP quando tiver 8 dígitos
+      const cepLimpo = formattedValue.replace(/\D/g, '');
+      if (cepLimpo.length === 8) {
+        buscarCep(formattedValue);
+      }
+    }
+
+    setFormData({ ...formData, [name]: formattedValue });
   };
 
   const handleSubmit = async (e) => {
@@ -38,9 +155,12 @@ const Pessoas = () => {
     setLoading(true);
 
     try {
-      // Formatar a data antes de enviar
+      // Formatar a data antes de enviar e remover formatação dos campos
       const dataToSend = {
         ...formData,
+        cpf: formData.cpf.replace(/\D/g, ''),
+        telefone: formData.telefone.replace(/\D/g, ''),
+        cep: formData.cep.replace(/\D/g, ''),
         dataNasc: formData.dataNasc && formData.dataNasc.includes('T') 
           ? formData.dataNasc.split('T')[0] 
           : formData.dataNasc || null
@@ -51,7 +171,7 @@ const Pessoas = () => {
         setSuccess('Pessoa atualizada com sucesso!');
         setEditingId(null);
       } else {
-        await apiService.createPessoa(formData);
+        await apiService.createPessoa(dataToSend);
         setSuccess('Pessoa cadastrada com sucesso!');
       }
       setFormData({
@@ -90,13 +210,18 @@ const Pessoas = () => {
   const handleEdit = async (id) => {
     try {
       const pessoa = await apiService.getPessoaById(id);
+      // Formatar CPF, telefone e CEP ao carregar para edição
+      const cpfFormatted = pessoa.cpf ? formatCpf(pessoa.cpf) : '';
+      const telefoneFormatted = pessoa.telefone ? formatTelefone(pessoa.telefone) : '';
+      const cepFormatted = pessoa.cep ? formatCep(pessoa.cep) : '';
+      
       setFormData({
         nome: pessoa.nome || '',
-        cpf: pessoa.cpf || '',
+        cpf: cpfFormatted,
         dataNasc: formatDateForInput(pessoa.dataNasc) || '',
-        telefone: pessoa.telefone || '',
+        telefone: telefoneFormatted,
         email: pessoa.email || '',
-        cep: pessoa.cep || '',
+        cep: cepFormatted,
         logradouro: pessoa.logradouro || '',
         numero: pessoa.numero || '',
         complemento: pessoa.complemento || '',
@@ -182,7 +307,15 @@ const Pessoas = () => {
               </div>
               <div className="form-group">
                 <label>CPF *</label>
-                <input type="text" name="cpf" value={formData.cpf} onChange={handleChange} required />
+                <input 
+                  type="text" 
+                  name="cpf" 
+                  value={formData.cpf} 
+                  onChange={handleChange} 
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  required 
+                />
               </div>
             </div>
 
@@ -193,7 +326,14 @@ const Pessoas = () => {
               </div>
               <div className="form-group">
                 <label>Telefone</label>
-                <input type="tel" name="telefone" value={formData.telefone} onChange={handleChange} />
+                <input 
+                  type="tel" 
+                  name="telefone" 
+                  value={formData.telefone} 
+                  onChange={handleChange}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
+                />
               </div>
             </div>
 
@@ -208,14 +348,34 @@ const Pessoas = () => {
               </div>
             </div>
 
-            <div className="form-row">
+              <div className="form-row">
               <div className="form-group">
                 <label>CEP</label>
-                <input type="text" name="cep" value={formData.cep} onChange={handleChange} />
+                <input 
+                  type="text" 
+                  name="cep" 
+                  value={formData.cep} 
+                  onChange={handleChange}
+                  placeholder="00000-000"
+                  maxLength={9}
+                  disabled={loadingCep}
+                />
+                {loadingCep && <small style={{ color: '#666', fontSize: '0.85rem' }}>Buscando CEP...</small>}
               </div>
               <div className="form-group">
                 <label>Estado</label>
-                <input type="text" name="estado" value={formData.estado} onChange={handleChange} />
+                <select 
+                  name="estado" 
+                  value={formData.estado} 
+                  onChange={handleChange}
+                >
+                  <option value="">Selecione o estado</option>
+                  {estadosBrasil.map(estado => (
+                    <option key={estado.sigla} value={estado.sigla}>
+                      {estado.sigla} - {estado.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -297,7 +457,7 @@ const Pessoas = () => {
                       <tr key={item.id}>
                         <td>{item.id}</td>
                         <td>{item.nome}</td>
-                        <td>{item.cpf}</td>
+                        <td>{item.cpf ? formatCpf(item.cpf) : '-'}</td>
                         <td>{item.email || '-'}</td>
                         <td>{item.tipo || 'User'}</td>
                         <td>
