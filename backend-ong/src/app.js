@@ -19,8 +19,12 @@ import authRoutes from "./routes/auth.route.js";
 
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: "http://localhost:5173", // domínio do frontend
+  credentials: true // permite envio de cookies / auth headers
+}));
+app.use(express.json({ limit: '10mb' })); // Aumentar limite para 10MB para suportar imagens em base64
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 
 

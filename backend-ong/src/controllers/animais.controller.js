@@ -28,6 +28,11 @@ export async function createAnimalController(req, res) {
                 .status(404)
                 .json({ error: "A 'racasId' (raça) fornecida não existe." });
         }
+        if (error.code === "ER_DATA_TOO_LONG") {
+            return res
+                .status(400)
+                .json({ error: "A imagem é muito grande. Por favor, use uma imagem menor ou altere o tipo da coluna fotoUrl para TEXT no banco de dados." });
+        }
         res.status(500).json({ error: "Erro ao criar animal." });
     }
 }

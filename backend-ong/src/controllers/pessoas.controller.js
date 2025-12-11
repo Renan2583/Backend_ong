@@ -4,33 +4,62 @@ import {
     getPessoaById,
     updatePessoa,
     deletePessoa,
+    findPessoaByCpf,
 } from "../repositories/pessoas.repo.js";
 import bcrypt from 'bcrypt';
 
 export async function createPessoaController(req, res) {
     try {
         
-        const { senha, ...dadosPessoa } = req.body;
+        const { senha, cpf, ...dadosPessoa } = req.body;
 
         
         if (!senha) {
             return res.status(400).json({ error: "A 'senha' é obrigatória." });
         }
+
+        if (!cpf) {
+            return res.status(400).json({ error: "O 'cpf' é obrigatório." });
+        }
+
+        if (!dadosPessoa.dataNasc) {
+            return res.status(400).json({ error: "A 'dataNasc' é obrigatória." });
+        }
+
+        // Verificar se o CPF já existe
+        const pessoaExistente = await findPessoaByCpf(cpf);
+        if (pessoaExistente) {
+            return res.status(409).json({ error: "CPF já cadastrado." });
+        }
         
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
 
+        // Se o tipo não foi enviado, define como 'User' (cadastro pelo login)
+        // Se foi enviado, usa o valor (cadastro pela página de Pessoas)
+        const tipo = dadosPessoa.tipo || 'User';
         
         const novoId = await createPessoa({ 
-            ...dadosPessoa, 
+            ...dadosPessoa,
+            cpf,
             senha: senhaHash, 
-            tipo: 'User' 
+            tipo: tipo 
         });
 
         res.status(201).json({ id: novoId });
 
     } catch (error) {
         console.error("Erro em createPessoaController:", error);
+        
+        // Tratar erro de CPF duplicado (caso a validação anterior falhe)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: "CPF já cadastrado." });
+        }
+        
+        // Tratar erro de campo NULL
+        if (error.code === 'ER_BAD_NULL_ERROR') {
+            return res.status(400).json({ error: "Alguns campos obrigatórios não foram preenchidos." });
+        }
         
         res.status(500).json({ error: "Erro ao criar pessoa" });
     }
@@ -66,14 +95,14 @@ export async function getPessoaByIdController(req, res) {
 export async function updatePessoaController(req, res) {
     try {
         const { id } = req.params;
-        const { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado } = req.body;
+        const { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado, tipo } = req.body;
 
        
-        if (!nome || !cpf || !dataNasc || !telefone || !email || !cep || !logradouro || !numero || !cidade || !estado) {
-            return res.status(400).json({ error: "Dados incompletos. Verifique os campos obrigatórios." });
+        if (!nome || !cpf) {
+            return res.status(400).json({ error: "Dados incompletos. Nome e CPF são obrigatórios." });
         }
        
-        const affectedRows = await updatePessoa(id, { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado });
+        const affectedRows = await updatePessoa(id, { nome, cpf, dataNasc, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado, tipo });
 
       
         if (affectedRows === 0) {
