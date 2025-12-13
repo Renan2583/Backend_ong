@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import apiService from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import DeleteModal from '../components/DeleteModal';
 import './CrudPage.css';
 
 const Recursos = () => {
@@ -12,6 +13,8 @@ const Recursos = () => {
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({ tipo: '', nome: '', quantidade: '', valor: '', descricao: '' });
   const [editingId, setEditingId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, itemName: '' });
+  const [itensRestaurados, setItensRestaurados] = useState(new Set());
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -67,16 +70,24 @@ const Recursos = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir este recurso?')) return;
+  const handleDeleteClick = (id, itemName) => {
+    setDeleteModal({ isOpen: true, id, itemName });
+  };
+
+  const handleDeleteConfirm = async (motivo) => {
+    if (!deleteModal.id) return;
+    
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      await apiService.deleteRecurso(id);
+      await apiService.deleteRecurso(deleteModal.id, motivo);
       setSuccess('Recurso excluído com sucesso!');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
       handleListar();
     } catch (err) {
       setError(err.message || 'Erro ao excluir recurso');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
     } finally {
       setLoading(false);
     }
@@ -94,6 +105,20 @@ const Recursos = () => {
     try {
       const data = await apiService.getRecursos();
       setItems(data);
+      
+      // Verificar quais itens foram restaurados
+      const restauradosSet = new Set();
+      for (const item of data) {
+        try {
+          const { foiRestaurado } = await apiService.verificarSeFoiRestaurado('Recurso', item.id);
+          if (foiRestaurado) {
+            restauradosSet.add(item.id);
+          }
+        } catch (err) {
+          console.error('Erro ao verificar se foi restaurado:', err);
+        }
+      }
+      setItensRestaurados(restauradosSet);
     } catch (err) {
       setError(err.message || 'Erro ao carregar recursos');
     } finally {
@@ -182,9 +207,23 @@ const Recursos = () => {
                         <td>{item.quantidade}</td>
                         <td>R$ {item.valor ? parseFloat(item.valor).toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                            <button onClick={() => handleEdit(item.id)} className="btn-action btn-edit" title="Editar" disabled={loading}>✏️</button>
-                            <button onClick={() => handleDelete(item.id)} className="btn-action btn-delete" title="Excluir" disabled={loading}>🗑️</button>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button onClick={() => handleEdit(item.id)} className="btn-action btn-edit" title="Editar" disabled={loading}>✏️</button>
+                              {!itensRestaurados.has(item.id) && (
+                                <button onClick={() => handleDeleteClick(item.id, `${item.tipo} - ${item.nome}`)} className="btn-action btn-delete" title="Excluir" disabled={loading}>🗑️</button>
+                              )}
+                            </div>
+                            {itensRestaurados.has(item.id) && (
+                              <small style={{ 
+                                color: '#28a745', 
+                                fontSize: '0.75rem', 
+                                fontWeight: '600',
+                                fontStyle: 'italic'
+                              }}>
+                                ✅ Restaurado pelo administrador
+                              </small>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -196,6 +235,13 @@ const Recursos = () => {
           )}
         </div>
       </div>
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, itemName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Recurso"
+        itemName={deleteModal.itemName}
+      />
     </div>
   );
 };

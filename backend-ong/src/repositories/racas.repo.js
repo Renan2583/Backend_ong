@@ -100,9 +100,14 @@ export async function updateRaca(id, raca) {
 
 
 export async function deleteRaca(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const raca = await getRacaById(id);
+    
     const [result] = await pool.query(
         "UPDATE racas SET isDeleted = TRUE WHERE id = ?",
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: raca };
 }

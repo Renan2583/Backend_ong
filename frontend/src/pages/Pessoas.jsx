@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import apiService from '../services/api';
+import DeleteModal from '../components/DeleteModal';
 import './CrudPage.css';
 
 // Lista de estados brasileiros
@@ -58,6 +59,8 @@ const Pessoas = () => {
     tipo: 'User'
   });
   const [editingId, setEditingId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, itemName: '' });
+  const [itensRestaurados, setItensRestaurados] = useState(new Set());
 
   // Funções de formatação
   const formatCpf = (value) => {
@@ -240,18 +243,24 @@ const Pessoas = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta pessoa?')) {
-      return;
-    }
+  const handleDeleteClick = (id, itemName) => {
+    setDeleteModal({ isOpen: true, id, itemName });
+  };
+
+  const handleDeleteConfirm = async (motivo) => {
+    if (!deleteModal.id) return;
+    
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      await apiService.deletePessoa(id);
+      await apiService.deletePessoa(deleteModal.id, motivo);
       setSuccess('Pessoa excluída com sucesso!');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
       handleListar();
     } catch (err) {
       setError(err.message || 'Erro ao excluir pessoa');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
     } finally {
       setLoading(false);
     }
@@ -272,10 +281,10 @@ const Pessoas = () => {
       bairro: '',
       cidade: '',
       estado: '',
-        senha: '',
-        tipo: 'User'
-      });
-    };
+      senha: '',
+      tipo: 'User'
+    });
+  };
 
   const handleListar = async () => {
     setShowList(true);
@@ -284,6 +293,20 @@ const Pessoas = () => {
     try {
       const data = await apiService.getPessoas();
       setItems(data);
+      
+      // Verificar quais itens foram restaurados
+      const restauradosSet = new Set();
+      for (const item of data) {
+        try {
+          const { foiRestaurado } = await apiService.verificarSeFoiRestaurado('Pessoa', item.id);
+          if (foiRestaurado) {
+            restauradosSet.add(item.id);
+          }
+        } catch (err) {
+          console.error('Erro ao verificar se foi restaurado:', err);
+        }
+      }
+      setItensRestaurados(restauradosSet);
     } catch (err) {
       setError(err.message || 'Erro ao carregar pessoas');
     } finally {
@@ -461,23 +484,37 @@ const Pessoas = () => {
                         <td>{item.email || '-'}</td>
                         <td>{item.tipo || 'User'}</td>
                         <td>
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                            <button
-                              onClick={() => handleEdit(item.id)}
-                              className="btn-action btn-edit"
-                              title="Editar"
-                              disabled={loading}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="btn-action btn-delete"
-                              title="Excluir"
-                              disabled={loading}
-                            >
-                              🗑️
-                            </button>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button
+                                onClick={() => handleEdit(item.id)}
+                                className="btn-action btn-edit"
+                                title="Editar"
+                                disabled={loading}
+                              >
+                                ✏️
+                              </button>
+                              {!itensRestaurados.has(item.id) && (
+                                <button
+                                  onClick={() => handleDeleteClick(item.id, item.nome)}
+                                  className="btn-action btn-delete"
+                                  title="Excluir"
+                                  disabled={loading}
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
+                            {itensRestaurados.has(item.id) && (
+                              <small style={{ 
+                                color: '#28a745', 
+                                fontSize: '0.75rem', 
+                                fontWeight: '600',
+                                fontStyle: 'italic'
+                              }}>
+                                ✅ Restaurado pelo administrador
+                              </small>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -489,6 +526,13 @@ const Pessoas = () => {
           )}
         </div>
       </div>
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, itemName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Pessoa"
+        itemName={deleteModal.itemName}
+      />
     </div>
   );
 };

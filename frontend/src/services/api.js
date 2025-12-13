@@ -33,7 +33,19 @@ class ApiService {
                 throw new Error(errorData.error || `HTTP error! Status ${response.status}`);
             }
             
-            return await response.json();
+            // Se for status 204 (No Content), retornar null em vez de tentar fazer parse JSON
+            if (response.status === 204) {
+                return null;
+            }
+            
+            // Tentar fazer parse JSON apenas se houver conteúdo
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const text = await response.text();
+                return text ? JSON.parse(text) : null;
+            }
+            
+            return null;
 
         } catch (error) {
             console.error('Erro na requisição', error);
@@ -295,9 +307,10 @@ class ApiService {
         });
     }
 
-    async deleteDoacao(id) {
+    async deleteDoacao(id, motivo) {
         return this.request(`/doacoes/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
         });
     }
 
@@ -320,9 +333,10 @@ class ApiService {
         });
     }
 
-    async deleteAtendimento(id) {
+    async deleteAtendimento(id, motivo) {
         return this.request(`/atendimentos/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
         });
     }
 
@@ -345,9 +359,10 @@ class ApiService {
         });
     }
 
-    async deleteAdocao(id) {
+    async deleteAdocao(id, motivo) {
         return this.request(`/adocoes/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
         });
     }
 
@@ -374,6 +389,57 @@ class ApiService {
 
     async getRelatorioAtendimentos() {
         return this.request('/atendimentos/relatorio');
+    }
+
+    // Histórico de Exclusões
+    async getHistoricoExclusoes() {
+        return this.request('/historico-exclusoes');
+    }
+
+    async getHistoricoExclusoesByTipo(tipo) {
+        return this.request(`/historico-exclusoes/${tipo}`);
+    }
+
+    async restaurarExclusao(id) {
+        return this.request(`/historico-exclusoes/${id}/restaurar`, {
+            method: 'POST'
+        });
+    }
+
+    async verificarSeFoiRestaurado(tipoEntidade, entidadeId) {
+        return this.request(`/historico-exclusoes/verificar/${tipoEntidade}/${entidadeId}`);
+    }
+
+    // Recursos
+    async deleteRecurso(id, motivo) {
+        return this.request(`/recursos/${id}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
+        });
+    }
+
+    // Pessoas
+    async deletePessoa(id, motivo) {
+        return this.request(`/pessoas/${id}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
+        });
+    }
+
+    // Animais
+    async deleteAnimal(id, motivo) {
+        return this.request(`/animais/${id}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
+        });
+    }
+
+    // Raças
+    async deleteRaca(id, motivo) {
+        return this.request(`/racas/${id}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ motivo })
+        });
     }
 }
 

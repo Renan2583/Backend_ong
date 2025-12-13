@@ -12,6 +12,7 @@ import animaisRoutes from "./routes/animais.route.js";
 import atendimentosRoutes from "./routes/atendimentos.route.js";
 import adocoesRoutes from "./routes/adocoes.route.js";
 import authRoutes from "./routes/auth.route.js";
+import historicoExclusoesRoutes from "./routes/historico_exclusoes.route.js";
 
 
 
@@ -39,6 +40,7 @@ app.use("/animais", animaisRoutes);
 app.use("/atendimentos", atendimentosRoutes);
 app.use("/adocoes", adocoesRoutes);
 app.use("/auth", authRoutes);
+app.use("/historico-exclusoes", historicoExclusoesRoutes);
 
 
 

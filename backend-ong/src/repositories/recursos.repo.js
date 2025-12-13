@@ -34,11 +34,16 @@ export async function updateRecurso(id,recurso){
 }
 
 export async function deleteRecurso(id){
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const recurso = await getRecursoById(id);
+    
     const [result] = await pool.query(
         "UPDATE recursos SET isDeleted = TRUE WHERE id = ?",
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: recurso };
 }
 
 // Relatório de recursos

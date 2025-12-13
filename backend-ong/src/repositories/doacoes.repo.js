@@ -218,11 +218,16 @@ export async function updateDoacao(id, doacaoData) {
 }
 
 export async function deleteDoacao(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const doacao = await getDoacaoById(id);
+    
     const [result] = await pool.query(
         "UPDATE doacoes SET isDeleted = TRUE WHERE id = ?",
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: doacao };
 }
 
 

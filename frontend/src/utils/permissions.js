@@ -25,7 +25,8 @@ export const ADMIN_ROUTES = [
   '/racas',
   '/veterinarios',
   '/atendimentos',
-  '/relatorios'
+  '/relatorios',
+  '/historico-exclusoes'
 ];
 
 // Verifica se o usuário tem permissão para acessar uma rota
@@ -56,6 +57,7 @@ export const getMenuItems = (user) => {
     { path: '/atendimentos', label: '🩺 Atendimentos', icon: '🩺', adminOnly: true },
     { path: '/adocoes', label: '🏠 Adoções', icon: '🏠', adminOnly: false },
     { path: '/relatorios', label: '📊 Relatórios', icon: '📊', adminOnly: true },
+    { path: '/historico-exclusoes', label: '📋 Histórico de Exclusões', icon: '📋', adminOnly: true },
   ];
 
   if (!user) return [];

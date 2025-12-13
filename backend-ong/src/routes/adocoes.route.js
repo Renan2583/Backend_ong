@@ -9,6 +9,7 @@ import {
     deleteAdocaoController,
     getRelatorioAdocoesController,
 } from "../controllers/adocoes.controller.js";
+import { verifyToken } from "../controllers/auth.controller.js";
 
 const router = Router();
 
@@ -34,6 +35,6 @@ router.get("/:id", getAdocaoByIdController);
 router.put("/:id", updateAdocaoController);
 
 // Rota para DELETAR um registro de adoção
-router.delete("/:id", deleteAdocaoController);
+router.delete("/:id", verifyToken, deleteAdocaoController);
 
 export default router;

@@ -7,6 +7,7 @@ import {
     updateRacaController,
     deleteRacaController,
 } from "../controllers/racas.controller.js";
+import { verifyToken } from "../controllers/auth.controller.js";
 
 const router = Router();
 
@@ -27,6 +28,6 @@ router.get("/:id", getRacaByIdController);
 router.put("/:id", updateRacaController);
 
 // Rota para DELETAR (Soft Delete) uma raça pelo ID
-router.delete("/:id", deleteRacaController);
+router.delete("/:id", verifyToken, deleteRacaController);
 
 export default router;

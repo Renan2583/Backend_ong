@@ -69,9 +69,14 @@ export async function updateAnimal(id, animal) {
 
 
 export async function deleteAnimal(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const animal = await getAnimalById(id);
+    
     const [result] = await pool.query(
         "UPDATE animais SET isDeleted = TRUE WHERE id = ?",
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: animal };
 }

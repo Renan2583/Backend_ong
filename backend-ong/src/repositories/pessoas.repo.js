@@ -69,9 +69,14 @@ export async function updatePessoa(id, pessoa) {
 }
 
 export async function deletePessoa(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const pessoa = await getPessoaById(id);
+    
     const [result] = await pool.query(
         "UPDATE pessoas SET isDeleted = TRUE WHERE id = ?", 
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: pessoa };
 }

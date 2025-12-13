@@ -124,8 +124,13 @@ export async function updateAdocao(id, adocaoData) {
 
 
 export async function deleteAdocao(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const adocao = await getAdocaoById(id);
+    
     const [result] = await pool.query("DELETE FROM adocoes WHERE id = ?", [id]);
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: adocao };
 }
 
 // Relatório de adoções

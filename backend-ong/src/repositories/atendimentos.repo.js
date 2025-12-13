@@ -82,11 +82,16 @@ export async function updateAtendimento(id, atendimento) {
 
 
 export async function deleteAtendimento(id) {
+    // Primeiro buscar os dados antes de deletar para salvar no histórico
+    const atendimento = await getAtendimentoById(id);
+    
     const [result] = await pool.query(
         "DELETE FROM atendimentos WHERE id = ?",
         [id]
     );
-    return result.affectedRows;
+    
+    // Retornar os dados e o número de linhas afetadas
+    return { affectedRows: result.affectedRows, dadosAntigos: atendimento };
 }
 
 // Relatório de atendimentos

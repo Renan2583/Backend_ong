@@ -17,6 +17,7 @@ import Doacoes from "./pages/Doacoes";
 import Atendimentos from "./pages/Atendimentos";
 import Adocoes from "./pages/Adocoes";
 import Relatorios from "./pages/Relatorios";
+import HistoricoExclusoes from "./pages/HistoricoExclusoes";
 
 function App() {
   return (
@@ -127,6 +128,14 @@ function App() {
                   <>
                     <Navbar />
                     <Relatorios />
+                  </>
+                </ProtectedRoute>
+              } />
+              <Route path="/historico-exclusoes" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <>
+                    <Navbar />
+                    <HistoricoExclusoes />
                   </>
                 </ProtectedRoute>
               } />

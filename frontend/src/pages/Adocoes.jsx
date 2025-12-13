@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiService from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import DeleteModal from '../components/DeleteModal';
 import './CrudPage.css';
 import './Relatorios.css';
 
@@ -17,6 +18,8 @@ const Adocoes = () => {
     animalId: '', pessoaId: '', dataAdocao: '', termoAssinado: false, observacoes: ''
   });
   const [editingId, setEditingId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, itemName: '' });
+  const [itensRestaurados, setItensRestaurados] = useState(new Set());
 
   useEffect(() => {
     apiService.getAnimais().then(setAnimais).catch(console.error);
@@ -93,16 +96,23 @@ const Adocoes = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta adoção?')) return;
+  const handleDeleteClick = (id, itemName) => {
+    setDeleteModal({ isOpen: true, id, itemName });
+  };
+
+  const handleDeleteConfirm = async (motivo) => {
+    if (!deleteModal.id) return;
+    
     setLoading(true);
     setError('');
     try {
-      await apiService.deleteAdocao(id);
+      await apiService.deleteAdocao(deleteModal.id, motivo);
       setSuccess('Adoção excluída com sucesso!');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
       handleListar();
     } catch (err) {
       setError(err.message || 'Erro ao excluir adoção');
+      setDeleteModal({ isOpen: false, id: null, itemName: '' });
     } finally {
       setLoading(false);
     }
@@ -118,15 +128,29 @@ const Adocoes = () => {
     setError('');
     setLoading(true);
     try {
+      let data;
       // Se for usuário comum, buscar apenas suas adoções
       if (user?.tipo === 'User') {
-        const data = await apiService.getAdocoesByPessoaId(user.id);
-        setItems(data);
+        data = await apiService.getAdocoesByPessoaId(user.id);
       } else {
         // Admin vê todas
-        const data = await apiService.getAdocoes();
-        setItems(data);
+        data = await apiService.getAdocoes();
       }
+      setItems(data);
+      
+      // Verificar quais itens foram restaurados
+      const restauradosSet = new Set();
+      for (const item of data) {
+        try {
+          const { foiRestaurado } = await apiService.verificarSeFoiRestaurado('Adocao', item.id);
+          if (foiRestaurado) {
+            restauradosSet.add(item.id);
+          }
+        } catch (err) {
+          console.error('Erro ao verificar se foi restaurado:', err);
+        }
+      }
+      setItensRestaurados(restauradosSet);
     } catch (err) {
       setError(err.message || 'Erro ao carregar adoções');
     } finally {
@@ -367,9 +391,23 @@ const Adocoes = () => {
                         <td>{new Date(item.dataAdocao).toLocaleDateString()}</td>
                         <td>{item.termoAssinado ? 'Sim' : 'Não'}</td>
                         <td>
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                            <button onClick={() => handleEdit(item.id)} className="btn-action btn-edit" title="Editar" disabled={loading}>✏️</button>
-                            <button onClick={() => handleDelete(item.id)} className="btn-action btn-delete" title="Excluir" disabled={loading}>🗑️</button>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button onClick={() => handleEdit(item.id)} className="btn-action btn-edit" title="Editar" disabled={loading}>✏️</button>
+                              {!itensRestaurados.has(item.id) && (
+                                <button onClick={() => handleDeleteClick(item.id, `Adoção #${item.id} - ${item.animalNome} por ${item.adotanteNome || 'N/A'}`)} className="btn-action btn-delete" title="Excluir" disabled={loading}>🗑️</button>
+                              )}
+                            </div>
+                            {itensRestaurados.has(item.id) && (
+                              <small style={{ 
+                                color: '#28a745', 
+                                fontSize: '0.75rem', 
+                                fontWeight: '600',
+                                fontStyle: 'italic'
+                              }}>
+                                ✅ Restaurado pelo administrador
+                              </small>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -381,6 +419,13 @@ const Adocoes = () => {
           )}
         </div>
       </div>
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, itemName: '' })}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Adoção"
+        itemName={deleteModal.itemName}
+      />
     </div>
   );
 };

@@ -123,15 +123,37 @@ export async function updatePessoaController(req, res) {
 export async function deletePessoaController(req, res) {
     try {
         const { id } = req.params;
-        
-        
-        const affectedRows = await deletePessoa(id);
+        const { motivo } = req.body;
+        const userId = req.userId; // Do middleware verifyToken
 
-        
-        if (affectedRows === 0) {
+        // Validar motivo obrigatório
+        if (!motivo || motivo.trim() === '') {
+            return res.status(400).json({ 
+                error: "Motivo da exclusão é obrigatório." 
+            });
+        }
+
+        const resultado = await deletePessoa(id);
+
+        if (resultado.affectedRows === 0) {
             return res.status(404).json({ error: "Pessoa não encontrada para deletar" });
         }
-       
+
+        // Registrar no histórico de exclusões
+        try {
+            const { registrarExclusao } = await import("../repositories/historico_exclusoes.repo.js");
+            await registrarExclusao({
+                tipoEntidade: 'Pessoa',
+                entidadeId: parseInt(id),
+                motivo: motivo.trim(),
+                excluidoPor: userId,
+                dadosAntigos: resultado.dadosAntigos
+            });
+        } catch (histError) {
+            console.error("Erro ao registrar exclusão no histórico:", histError);
+            // Não falhar a exclusão se o histórico falhar, apenas logar o erro
+        }
+
         res.status(204).send();
 
     } catch (error) {
