@@ -2,3 +2,5 @@
 
 Nome e Ra dos integrantes
 Gabriel Lucas Perosso - 10482417500
+Renan Villanova Coimbra - 10482522533
+Larissa Maria - 10482418240
